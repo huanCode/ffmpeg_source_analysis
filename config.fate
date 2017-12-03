@@ -1,0 +1,1 @@
+config:x86:x86_32:generic:win32:用于 x86 的 Microsoft (R) C/C++ 优化编译器 19.00.23026 版:--enable-shared --prefix=./vs2015_shared --enable-debug --toolchain=msvc --disable-yasm --disable-parsers --disable-muxers --disable-demuxers --enable-demuxer=mov
