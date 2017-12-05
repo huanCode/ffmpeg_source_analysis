@@ -1966,6 +1966,7 @@ static void pmt_cb(MpegTSFilter *filter, const uint8_t *section, int section_len
         return;
     program_info_length &= 0xfff;
     while (program_info_length >= 2) {
+		//目前还不知道作用，跳过
         uint8_t tag, len;
         tag = get8(&p, p_end);
         len = get8(&p, p_end);
