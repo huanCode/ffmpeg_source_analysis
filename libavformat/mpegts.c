@@ -416,8 +416,7 @@ static void write_section_data(MpegTSContext *ts, MpegTSFilter *tss1,
         tss->section_h_size = len;
     }
 
-    if (tss->section_h_size != -1 &&
-        tss->section_index >= tss->section_h_size) {
+    if (tss->section_h_size != -1 && tss->section_index >= tss->section_h_size) {
         int crc_valid = 1;
         tss->end_of_section_reached = 1;
 
@@ -2266,7 +2265,14 @@ static int handle_packet(MpegTSContext *ts, const uint8_t *packet)
     int pid = AV_RB16(packet + 1) & 0x1fff;
     if (pid && discard_pid(ts, pid))
         return 0;
+	//is_start作用:
+
     int is_start = packet[1] & 0x40;	//get "payload unit start indicator" flag
+	is_start = is_start >> 6;
+
+
+
+
     tss = ts->pids[pid];
     if (ts->auto_guess && !tss && is_start) {
         add_pes_stream(ts, pid, -1);
@@ -2286,7 +2292,7 @@ static int handle_packet(MpegTSContext *ts, const uint8_t *packet)
 	//1Byte	自适应域长度，后面的字节数，不包括adaptation_field_length，所以自适应长度应该为 adaptation_field_length + 1
 	int adaptation_field_length = packet[4];
 
-	//
+	//discontinuity_indicator = 0,表示连续
 	int discontinuity_indicator = (packet[5] & 0x80);
     int is_discontinuity =	has_adaptation &&
 						adaptation_field_length != 0 && /* with length > 0 */
@@ -2303,6 +2309,8 @@ static int handle_packet(MpegTSContext *ts, const uint8_t *packet)
 
 	//当前期待的continuity_counter应该为上一个continuity_counter+1
 	int expected_cc = has_payload ? (tss->last_cc + 1) & 0x0f : tss->last_cc;
+
+	//cc_ok = 0，表示正常
     int cc_ok = pid == 0x1FFF || // null packet PID
             is_discontinuity ||
             tss->last_cc < 0 ||
@@ -2310,9 +2318,8 @@ static int handle_packet(MpegTSContext *ts, const uint8_t *packet)
 
     tss->last_cc = continuity_counter;
     if (!cc_ok) {
-        av_log(ts->stream, AV_LOG_DEBUG,
-               "Continuity check failed for pid %d expected %d got %d\n",
-               pid, expected_cc, continuity_counter);
+		
+        av_log(ts->stream, AV_LOG_DEBUG,"Continuity check failed for pid %d expected %d got %d\n",pid, expected_cc, continuity_counter);
         if (tss->type == MPEGTS_PES) {
             PESContext *pc = tss->u.pes_filter.opaque;
             pc->flags |= AV_PKT_FLAG_CORRUPT;
@@ -2348,6 +2355,7 @@ static int handle_packet(MpegTSContext *ts, const uint8_t *packet)
             if (len > p_end - p)
                 return 0;
             if (len && cc_ok) {
+				//很少走到这步,先不管
                 /* write remaining section bytes */
                 write_section_data(ts, tss,
                                    p, len, 0);
