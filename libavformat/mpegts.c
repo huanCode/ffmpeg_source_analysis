@@ -135,7 +135,7 @@ struct MpegTSContext {
 
     /* data needed to handle file based ts */
     /** stop parsing loop */
-    int stop_parse;
+    int stop_parse;		//2:表示找到了header,1:表示找到了frame parse
     /** packet containing Audio/Video data */
     AVPacket *pkt;
     /** to detect seek */
@@ -1017,6 +1017,7 @@ static int mpegts_push_data(MpegTSFilter *filter,
 
     if (is_start) {
         if (pes->state == MPEGTS_PAYLOAD && pes->data_index > 0) {
+			//只有新的视频一帧开始时，才能判断上一帧视频已经读取完毕，这时，可以保持好视频帧，并重置pes
             ret = new_pes_packet(pes, ts->pkt);
             if (ret < 0)
                 return ret;
@@ -2555,6 +2556,11 @@ static int handle_packets(MpegTSContext *ts, int64_t nb_packets)
         ret = read_packet(s, packet, ts->raw_packet_size, &data);
         if (ret != 0)
             break;
+
+		if (packet_num == 116)
+		{
+			int a = 1;
+		}
         ret = handle_packet(ts, data);
         finished_reading_packet(s, ts->raw_packet_size);
         if (ret != 0)
@@ -2806,6 +2812,7 @@ static int mpegts_read_packet(AVFormatContext *s, AVPacket *pkt)
     ts->pkt = pkt;
     ret = handle_packets(ts, 0);
     if (ret < 0) {
+		//读取pes出错时,重置读下个
         av_packet_unref(ts->pkt);
         /* flush pes data left */
         for (i = 0; i < NB_PID_MAX; i++)

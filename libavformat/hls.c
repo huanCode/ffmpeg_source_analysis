@@ -843,7 +843,7 @@ static int parse_playlist(HLSContext *c, const char *url,
 
                 seg->init_section = cur_init_section;
             }
-        }
+        } 
     }
     if (pls)
         pls->last_load_time = av_gettime_relative();

@@ -4658,10 +4658,12 @@ void ff_parse_key_value(const char *str, ff_parse_key_val_cb callback_get_buf,
         ptr++;
         key_len = ptr - key;
 
+		//callback_get_buf作用,用dest保存context里的bandwidth地址,然后在下面把值赋值给它
         callback_get_buf(context, key, key_len, &dest, &dest_len);
         dest_end = dest + dest_len - 1;
 
         if (*ptr == '\"') {
+			//解析出【 bandwidth="200" 】这样模式的值
             ptr++;
             while (*ptr && *ptr != '\"') {
                 if (*ptr == '\\') {
@@ -4679,6 +4681,7 @@ void ff_parse_key_value(const char *str, ff_parse_key_val_cb callback_get_buf,
             if (*ptr == '\"')
                 ptr++;
         } else {
+			//解析出【 bandwidth=200 】这样模式的值
             for (; *ptr && !(av_isspace(*ptr) || *ptr == ','); ptr++)
                 if (dest && dest < dest_end)
                     *dest++ = *ptr;
